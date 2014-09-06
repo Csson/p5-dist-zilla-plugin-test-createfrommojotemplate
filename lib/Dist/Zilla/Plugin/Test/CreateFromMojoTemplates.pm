@@ -11,8 +11,10 @@ use Moose::Util::TypeConstraints;
 use Path::Tiny;
 
 use Dist::Zilla::File::InMemory;
-with ('Dist::Zilla::Role::FileGatherer',
-      'Dist::Zilla::Role::FileMunger');
+extends 'Dist::Zilla::Plugin::InlineFiles';
+with 'Dist::Zilla::Role::TextTemplate';
+#with ('Dist::Zilla::Role::FileGatherer',
+#      'Dist::Zilla::Role::FileMunger');
 
 has directory => (
     is => 'ro',
@@ -24,40 +26,23 @@ has filepattern => (
     isa => 'Str',
     default => sub { '^\w+-\d+\.mojo$' },
 );
-has content => (
-    is => 'ro',
-    isa => 'ArrayRef',
-);
+#has content => (
+#    is => 'ro',
+#    isa => 'ArrayRef',
+#);
+#
+#has _file => (
+#    is => 'rw',
+#    isa => role_type('Dist::Zilla::Role::File'),
+#);
 
-has _file => (
-    is => 'rw',
-    isa => role_type('Dist::Zilla::Role::File'),
-);
 
-sub gather_files {
-    my $self = shift;
-    my $arg = @_;
-
-    my @files = File::Find::Rule->file->name(qr/@{[ $self->filepattern ]}/)->in($self->directory);
-    foreach my $file (@files) {
-        my $contents = path($file)->slurp;
-
-        $self->add_file($self->_file(
-            Dist::Zilla::File::InMemory->new(
-                name => $file,
-                content => $contents,
-            )
-        ));
-    }
-
-    return;
-
-}
-
-sub munge_file {
+around add_file => sub {
+    my $orig = shift;
     my $self = shift;
     my $file = shift;
 
+    warn '!!!!! filename >>>>' . $file->name;
     return if $file->name !~ m{^@{[ $self->directory ]}};
 
     (my $filename = $file->name) =~ s{\.mojo$}{.t};
@@ -65,11 +50,52 @@ sub munge_file {
     warn '>>>>> filename >>>>' . $filename;
     $file->name($filename);
 
-    warn '<<<< new filename >>>>>' . $file->name;
+    return $self->$orig(
+        Dist::Zilla::File::InMemory->new({
+            name => $file->name,
+            content => $file->content,
+        })
+    );
+};
 
-    return;
-}
 
+
+#sub gather_files {
+#    my $self = shift;
+#    my $arg = @_;
+#
+#    my @files = File::Find::Rule->file->name(qr/@{[ $self->filepattern ]}/)->in($self->directory);
+#    foreach my $file (@files) {
+#        my $contents = path($file)->slurp;
+#
+#        $self->add_file($self->_file(
+#            Dist::Zilla::File::InMemory->new(
+#                name => $file,
+#                content => $contents,
+#            )
+#        ));
+#    }
+#
+#    return;
+#
+#}
+#
+#sub munge_file {
+#    my $self = shift;
+#    my $file = shift;
+#
+#    return if $file->name !~ m{^@{[ $self->directory ]}};
+#
+#    (my $filename = $file->name) =~ s{\.mojo$}{.t};
+#    $filename =~ s{.*/([^/]*$)}{t/$1};
+#    warn '>>>>> filename >>>>' . $filename;
+#    $file->name($filename);
+#
+#    warn '<<<< new filename >>>>>' . $file->name;
+#
+#    return;
+#}
+__PACKAGE__->meta->make_immutable;
 
 
 
