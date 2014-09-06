@@ -7,14 +7,17 @@ our $VERSION = '0.01';
 use Moose;
 use File::Find::Rule;
 use namespace::sweep;
+use Moose::Util::TypeConstraints;
+use Path::Tiny;
 
 use Dist::Zilla::File::InMemory;
-with 'Dist::Zilla::Role::FileGatherer';
+with ('Dist::Zilla::Role::FileGatherer',
+      'Dist::Zilla::Role::FileMunger');
 
 has directory => (
     is => 'ro',
     isa => 'Str',
-    default => sub { 'examples/source' },
+    default => sub { 'examples/source/' },
 );
 has filepattern => (
     is => 'ro',
@@ -26,19 +29,48 @@ has content => (
     isa => 'ArrayRef',
 );
 
+has _file => (
+    is => 'rw',
+    isa => role_type('Dist::Zilla::Role::File'),
+);
+
 sub gather_files {
-	my $self = shift;
-	my $arg = @_;
+    my $self = shift;
+    my $arg = @_;
 
-	my @files = File::Find::Rule->file->name(qr/$self/);
+    my @files = File::Find::Rule->file->name(qr/@{[ $self->filepattern ]}/)->in($self->directory);
+    foreach my $file (@files) {
+        my $contents = path($file)->slurp;
 
-	warn '<<<<';
+        $self->add_file($self->_file(
+            Dist::Zilla::File::InMemory->new(
+                name => $file,
+                content => $contents,
+            )
+        ));
+    }
 
-	return;
+    return;
 
 }
 
-sub 
+sub munge_file {
+    my $self = shift;
+    my $file = shift;
+
+    return if $file->name !~ m{^@{[ $self->directory ]}};
+
+    (my $filename = $file->name) =~ s{\.mojo$}{.t};
+    $filename =~ s{.*/([^/]*$)}{t/$1};
+    warn '>>>>> filename >>>>' . $filename;
+    $file->name($filename);
+
+    warn '<<<< new filename >>>>>' . $file->name;
+
+    return;
+}
+
+
 
 
 1;
