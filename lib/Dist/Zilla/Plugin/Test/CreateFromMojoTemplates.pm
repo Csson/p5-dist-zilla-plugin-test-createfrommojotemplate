@@ -7,14 +7,11 @@ our $VERSION = '0.01';
 use Moose;
 use File::Find::Rule;
 use namespace::sweep;
-use Moose::Util::TypeConstraints;
+use Mojo::Template;
 use Path::Tiny;
 
 use Dist::Zilla::File::InMemory;
-extends 'Dist::Zilla::Plugin::InlineFiles';
-with 'Dist::Zilla::Role::TextTemplate';
-#with ('Dist::Zilla::Role::FileGatherer',
-#      'Dist::Zilla::Role::FileMunger');
+with 'Dist::Zilla::Role::FileGatherer';
 
 has directory => (
     is => 'ro',
@@ -26,75 +23,136 @@ has filepattern => (
     isa => 'Str',
     default => sub { '^\w+-\d+\.mojo$' },
 );
-#has content => (
-#    is => 'ro',
-#    isa => 'ArrayRef',
-#);
-#
-#has _file => (
-#    is => 'rw',
-#    isa => role_type('Dist::Zilla::Role::File'),
-#);
 
 
-around add_file => sub {
-    my $orig = shift;
+sub gather_files {
     my $self = shift;
-    my $file = shift;
+    my $arg = shift;
 
-    warn '!!!!! filename >>>>' . $file->name;
-    return if $file->name !~ m{^@{[ $self->directory ]}};
+    my $test_template = (File::Find::Rule->file->name('tempate.test')->in($self->directory))[0];
 
-    (my $filename = $file->name) =~ s{\.mojo$}{.t};
-    $filename =~ s{.*/([^/]*$)}{t/$1};
-    warn '>>>>> filename >>>>' . $filename;
-    $file->name($filename);
+    my @paths = File::Find::Rule->file->name(qr/@{[ $self->filepattern ]}/)->in($self->directory);
+    foreach my $path (@paths) {
+        
+        my $contents = prepare($test_template, $path);
 
-    return $self->$orig(
-        Dist::Zilla::File::InMemory->new({
-            name => $file->name,
-            content => $file->content,
-        })
-    );
-};
+        $path =~ s{\.mojo$}{.t};
+        $path =~ s{.*/([^/]*$)}{t/$1};
 
+        my $file = Dist::Zilla::File::InMemory->new(
+            name => $path,
+            content => $test_template . $contents,
+        );
+        $self->add_file($file);
+    }
+    return;
+}
 
+sub prepare {
+    my $test_template = shift;
+    my $path = shift;
+    my @lines = split /\n/ => path($path)->slurp;
 
-#sub gather_files {
-#    my $self = shift;
-#    my $arg = @_;
-#
-#    my @files = File::Find::Rule->file->name(qr/@{[ $self->filepattern ]}/)->in($self->directory);
-#    foreach my $file (@files) {
-#        my $contents = path($file)->slurp;
-#
-#        $self->add_file($self->_file(
-#            Dist::Zilla::File::InMemory->new(
-#                name => $file,
-#                content => $contents,
-#            )
-#        ));
-#    }
-#
-#    return;
-#
-#}
-#
-#sub munge_file {
-#    my $self = shift;
-#    my $file = shift;
-#
-#    return if $file->name !~ m{^@{[ $self->directory ]}};
-#
-#    (my $filename = $file->name) =~ s{\.mojo$}{.t};
-#    $filename =~ s{.*/([^/]*$)}{t/$1};
-#    warn '>>>>> filename >>>>' . $filename;
-#    $file->name($filename);
-#
-#    warn '<<<< new filename >>>>>' . $file->name;
-#
-#    return;
-#}
+    (my $filename = $path) =~ s{.*/([^/]*$)}{$1};
+    (my $baseurl = $filename) =~ s{^([^.]+)\.}{$1};
+    $baseurl =~ s{-}{_};
+
+    my $info = parse_source(@lines);
+
+    my @parsed = join "\n" => @{ $info->{'head_lines'} };
+    my $templater = Mojo::Template->new;
+
+    my $testcount = 0;
+    foreach my $test (@{ $info->{'tests'} }) {
+        ++$testcount;
+        push @parsed => join "\n" => @{ $test->{'lines_before'} };
+        push @parsed => sprintf '@@ %s_%d.html.ep' => $baseurl, $testcount;
+        push @parsed => $templater->render(join "\n" => @{ $test->{'lines_template'} });
+        push @parsed => join "\n" => @{ $test->{'lines_after'} };
+    }
+
+    return join '' => @parsed;
+
+}
+
+sub parse_source {
+    my @lines = @_;
+
+    my $test_start = '==TEST(?: EXAMPLE)(?: (\d+)?)==';
+    my $template_separator = '----';
+
+    my $environment = 'head';
+
+    my $info = {
+        head_lines => [],
+        tests      => []
+    };
+    my $test = {};
+
+    LINE:
+    while(my $line = @lines) {
+        chomp $line;
+
+        if($environment eq 'head') {
+            if($line =~ qr/$test_start/) {
+                $test = reset_test();
+                $test->{'test_number'} = $1;
+
+                push @{ $info->{'head_lines'} } => '',
+                $environment = 'test_before_template';
+
+                next LINE;
+            }
+            push @{ $info->{'head_lines'} } => $line;
+            next LINE;
+        }
+        if($environment eq 'test_before_template') {
+            if($line eq $template_separator) {
+                push @{ $test->{'lines_before'} } => '';
+                $environment = 'template';
+                next LINE;
+            }
+            push @{ $test->{'lines_before'} } => $line;
+            next LINE;
+        }
+        if($environment eq 'template') {
+            if($line eq $template_separator) {
+                # No need to push empty line to the template
+                $environment = 'test_after_template';
+                next LINE;
+            }
+            push @{ $test->{'lines_template'} } => $line;
+            next LINE;
+        }
+        if($environment eq 'test_after') {
+            if($line =~ qr/$test_start/) {
+                push @{ $test->{'lines_after'} } => '';
+                push @{ $info->{'tests'} } => $test;
+                $test = reset_test();
+                $test->{'test_number'} = $1;
+
+                $environment = 'test_before_template';
+
+                next LINE;
+            }
+            push @{ $test->{'lines_after'} } => $line;
+            next LINE;
+        }
+    }
+    push @{ $info->{'tests'} } => $test;
+
+    return $info;
+}
+
+sub reset_test {
+    return {
+        lines_before => [],
+        lines_template => [],
+        lines_after => [],
+        test_number => undef,
+    };
+}
+
 __PACKAGE__->meta->make_immutable;
 
 
