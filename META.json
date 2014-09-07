@@ -1,5 +1,5 @@
 {
-   "abstract" : "Create tests from custom templates",
+   "abstract" : "Create tests from custom L<Mojolicious> templates",
    "author" : [
       "Erik Carlsson <info@code301.com>"
    ],
@@ -36,7 +36,14 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.008005"
+            "Dist::Zilla::File::InMemory" : "5.000",
+            "Dist::Zilla::Role::FileGatherer" : "5.000",
+            "File::Find::Rule" : "0.33",
+            "MojoX::CustomTemplateFileParser" : "0.01",
+            "Moose" : "2.00",
+            "Path::Tiny" : "0.050",
+            "namespace::sweep" : "0.006",
+            "perl" : "5.010"
          }
       },
       "test" : {
