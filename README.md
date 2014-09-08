@@ -2,6 +2,10 @@
 
 Dist::Zilla::Plugin::Test::CreateFromMojoTemplates - Create tests from custom [Mojolicious](https://metacpan.org/pod/Mojolicious) templates
 
+<div>
+    <p><a style="float: left;" href="https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate"><img src="https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate.svg?branch=master">&nbsp;</a>
+</div>
+
 # SYNOPSIS
 
     ; In dist.ini

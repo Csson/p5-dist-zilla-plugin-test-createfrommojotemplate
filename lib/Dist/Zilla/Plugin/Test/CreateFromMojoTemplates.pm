@@ -60,6 +60,8 @@ __END__
 
 Dist::Zilla::Plugin::Test::CreateFromMojoTemplates - Create tests from custom L<Mojolicious> templates
 
+=for html <p><a style="float: left;" href="https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate"><img src="https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate.svg?branch=master">&nbsp;</a>
+
 =head1 SYNOPSIS
 
   ; In dist.ini
