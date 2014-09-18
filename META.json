@@ -24,6 +24,12 @@
       ]
    },
    "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::EOL" : "0",
+            "Test::Pod" : "0"
+         }
+      },
       "configure" : {
          "requires" : {
             "Module::Build::Tiny" : "0.037"
