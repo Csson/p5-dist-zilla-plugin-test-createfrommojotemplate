@@ -2,7 +2,7 @@
 
 Dist::Zilla::Plugin::Test::CreateFromMojoTemplates - Create Mojolicious tests from a custom template format (deprecated)
 
-![Requires Perl unknown](https://img.shields.io/badge/perl-unknown-brightgreen.svg) [![Travis status](https://api.travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate.svg?branch=master)](https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate) 
+![Requires Perl 5.10.1+](https://img.shields.io/badge/perl-5.10.1+-brightgreen.svg) [![Travis status](https://api.travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate.svg?branch=master)](https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate) 
 
 # VERSION
 
