@@ -2,11 +2,13 @@ package Dist::Zilla::Plugin::Test::CreateFromMojoTemplates;
 
 use strict;
 use 5.10.1;
-our $VERSION = '0.06';
+
+# VERSION
+# ABSTRACT: Create Mojolicious tests from a custom template format (deprecated)
 
 use Moose;
 use File::Find::Rule;
-use namespace::sweep;
+use namespace::autoclean;
 use Path::Tiny;
 use MojoX::CustomTemplateFileParser;
 
@@ -54,13 +56,7 @@ __PACKAGE__->meta->make_immutable;
 
 __END__
 
-=encoding utf-8
-
-=head1 NAME
-
-Dist::Zilla::Plugin::Test::CreateFromMojoTemplates - Create tests from custom L<Mojolicious> templates
-
-=for html <p><a style="float: left;" href="https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate"><img src="https://travis-ci.org/Csson/p5-dist-zilla-plugin-test-createfrommojotemplate.svg?branch=master">&nbsp;</a>
+=pod
 
 =head1 SYNOPSIS
 
@@ -71,26 +67,13 @@ Dist::Zilla::Plugin::Test::CreateFromMojoTemplates - Create tests from custom L<
 
 =head1 DESCRIPTION
 
+B<Deprecated>. See L<Dist::Zilla::Plugin::Stenciller::Mojolicious> instead.
+
 Dist::Zilla::Plugin::Test::CreateFromMojoTemplates creates tests by parsing a custom file format
 containg Mojolicious templates and the expected rendering. See L<MojoX::CustomTemplateFileParser> for details.
 
 It looks for files in a given C<directory> (by default C<examples/source>) that matches C<filepattern> (by default C<^\w+-\d+\.mojo$>).
 
 If you have many files you can also create a C<template.test> (currently hardcoded) file. Its content will be placed at the top of all created test files.
-
-=head1 AUTHOR
-
-Erik Carlsson E<lt>info@code301.comE<gt>
-
-=head1 COPYRIGHT
-
-Copyright 2014- Erik Carlsson
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-=head1 SEE ALSO
 
 =cut

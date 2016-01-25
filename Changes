@@ -1,6 +1,24 @@
 Revision history for Dist-Zilla-Plugin-Test-CreateFromMojoTemplates
 
 {{$NEXT}}
+ [API Changes]
+
+ [Bug Fixes]
+
+ [Documentation]
+
+ [Enhancements]
+
+ [New Features]
+
+ [Other Changes]
+  - Deprecated.
+  - Rebuilt with current Dist::Iller::Config::Author::CSSON.
+
+ [Requirements]
+  - Replaced namespace::sweep with namespace::autoclean.
+
+ [Testing]
 
 0.0700 Unreleased
  - Changed version format.
