@@ -2,6 +2,9 @@ Revision history for Dist-Zilla-Plugin-Test-CreateFromMojoTemplates
 
 {{$NEXT}}
 
+0.0700 Unreleased
+ - Changed version format.
+
 0.06  2014-09-18 21:21:09 CEST
     - Fix missing build prereqs.
 
